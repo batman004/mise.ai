@@ -1,0 +1,1 @@
+export { WastageTrendsChart } from "./WastageTrendsChart";
