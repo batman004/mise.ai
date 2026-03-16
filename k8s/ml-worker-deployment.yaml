@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-worker
+  namespace: mise-ai
+  labels:
+    app: ml-worker
+spec:
+  replicas: 1  # KEDA will manage scaling
+  selector:
+    matchLabels:
+      app: ml-worker
+  template:
+    metadata:
+      labels:
+        app: ml-worker
+    spec:
+      containers:
+      - name: ml-worker
+        image: mise-ai-ml-worker:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "queue_worker.py"]
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: PREDICTION_QUEUE
+          value: "prediction_queue"
+        - name: PREDICTION_RESULT_QUEUE
+          value: "prediction_result_queue"
+        - name: MAX_CONCURRENT_JOBS
+          value: "5"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 10

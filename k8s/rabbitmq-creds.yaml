@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-creds
+  namespace: mise-ai
+type: Opaque
+stringData:
+  username: admin
+  password: admin
+

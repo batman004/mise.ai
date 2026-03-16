@@ -1,0 +1,14 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-creds
+  namespace: mise-ai
+spec:
+  secretTargetRef:
+  - parameter: username
+    name: rabbitmq-creds
+    key: username
+  - parameter: password
+    name: rabbitmq-creds
+    key: password
+

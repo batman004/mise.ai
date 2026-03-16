@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-server
+  namespace: mise-ai
+  labels:
+    app: ml-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-server
+  template:
+    metadata:
+      labels:
+        app: ml-server
+    spec:
+      containers:
+      - name: ml-server
+        image: mise-ai-ml-server:latest
+        imagePullPolicy: IfNotPresent
+        command: ["uvicorn", "api_main:app", "--host", "0.0.0.0", "--port", "8001"]
+        ports:
+        - containerPort: 8001
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: ROOT_PATH
+          value: "/ml"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+

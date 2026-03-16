@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-server
+  namespace: mise-ai
+  labels:
+    app: core-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-server
+  template:
+    metadata:
+      labels:
+        app: core-server
+    spec:
+      containers:
+      - name: core-server
+        image: mise-ai-core-server:latest
+        imagePullPolicy: IfNotPresent
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://mise_user:mise_password@postgres-service:5432/mise_db"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: ML_SERVER_URL
+          value: "http://ml-server-service:8001"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "200m"
+          limits:
+            memory: "700Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      - name: consumer
+        image: mise-ai-core-server:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "consumer.py"]
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://mise_user:mise_password@postgres-service:5432/mise_db"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: ML_SERVER_URL
+          value: "http://ml-server-service:8001"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      - name: llm-result-consumer
+        image: mise-ai-core-server:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "llm_result_consumer.py"]
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://mise_user:mise_password@postgres-service:5432/mise_db"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: LLM_RESULT_QUEUE
+          value: "llm_result_queue"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 10

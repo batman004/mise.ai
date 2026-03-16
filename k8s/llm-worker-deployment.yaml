@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-llm-worker
+  namespace: mise-ai
+  labels:
+    app: ml-llm-worker
+spec:
+  replicas: 1  # KEDA will manage scaling
+  selector:
+    matchLabels:
+      app: ml-llm-worker
+  template:
+    metadata:
+      labels:
+        app: ml-llm-worker
+    spec:
+      containers:
+      - name: ml-llm-worker
+        image: mise-ai-ml-server:latest
+        imagePullPolicy: IfNotPresent
+        workingDir: /app
+        command: ["python", "llm_worker.py"]
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: RABBITMQ_USER
+          value: "admin"
+        - name: RABBITMQ_PASSWORD
+          value: "admin"
+        - name: RABBITMQ_VHOST
+          value: "/"
+        - name: LLM_QUEUE
+          value: "llm_queue"
+        - name: LLM_RESULT_QUEUE
+          value: "llm_result_queue"
+        - name: MAX_CONCURRENT_JOBS
+          value: "5"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+

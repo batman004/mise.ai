@@ -1,0 +1,26 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ml-worker-scaledobject
+  namespace: mise-ai
+spec:
+  scaleTargetRef:
+    name: ml-worker
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  pollingInterval: 30
+  cooldownPeriod: 100
+  idleReplicaCount: 0
+  triggers:
+  - type: rabbitmq
+    metadata:
+      queueName: prediction_queue
+      host: rabbitmq-service.mise-ai.svc.cluster.local:5672
+      queueLength: '10'  # Scale up when queue has 10+ messages
+      messageCount: '5'  # Scale up when 5+ messages per consumer
+      username: admin
+      password: admin
+      vhost: "/"
+      protocol: amqp
+      # KEDA scaling formula: ceil(queueLength / messageCount)
+      # With queueLength=50 and messageCount=25, we get 2 consumers for every 50 requests
