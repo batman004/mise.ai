@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+.DS_Store
+
+# Secrets — never commit real credentials
+k8s/secrets.yaml
+ml_server/vertexai_credentials.json
