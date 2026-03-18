@@ -2,6 +2,8 @@
 
 An AI-powered restaurant analytics platform that helps restaurants reduce food waste, optimize ordering, and make data-driven decisions through ML predictions, LLM-powered insights, and interactive dashboards.
 
+[Demo](https://drive.google.com/file/d/12nXTgJ7vRmBXKUr8yWGCmMhB5bLMGjS_/view)
+
 ## Architecture
 
 ```
