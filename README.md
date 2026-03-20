@@ -6,24 +6,7 @@ An AI-powered restaurant analytics platform that helps restaurants reduce food w
 
 ## Architecture
 
-```
-┌──────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│   Frontend   │       │   Core Server    │       │    ML Server     │
-│  React/Vite  │──────▶│    FastAPI       │──────▶│    FastAPI       │
-│  :3000 (dev) │  HTTP │    :8000         │  HTTP │    :8001         │
-└──────────────┘       └────────┬─────────┘       └───────┬──────────┘
-                                │                         │
-                       ┌────────▼─────────┐      ┌────────▼──────────┐
-                       │   PostgreSQL     │      │    RabbitMQ       │
-                       │   Data store     │      │   Task queues     │
-                       └──────────────────┘      └────────┬──────────┘
-                                                          │
-                                                 ┌────────▼──────────┐
-                                                 │  Workers (KEDA)   │
-                                                 │  ML + LLM tasks   │
-                                                 │  Redis job state  │
-                                                 └───────────────────┘
-```
+![](https://github.com/user-attachments/assets/f5f7fa16-5ac7-4f74-ba8f-0e1c6fb066c1)
 
 **Request flow:** The React frontend talks to the Core Server over REST. The Core Server handles data persistence in PostgreSQL and delegates ML/LLM work to the ML Server. Async tasks (predictions, insight generation) are enqueued via RabbitMQ, processed by auto-scaling workers, and results are written back through Redis and result queues.
 
